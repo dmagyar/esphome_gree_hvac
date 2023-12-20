@@ -39,7 +39,9 @@ void GreeUARTClimate::dump_config() {
 
 void GreeUARTClimate::loop() {
   gree_raw_packet_t *raw_packet = (gree_raw_packet_t *)this->data_read_;
-  ESP_LOGW(TAG, "loop");
+  if (this->available()) {
+        ESP_LOGW(TAG, "DMDMDM: got RX bytes: %d", this->available());
+  }
 
   while (!receiving_packet_ && this->available() >= sizeof(gree_header_t)) {
     ESP_LOGW(TAG, "Received new packet from AC");
