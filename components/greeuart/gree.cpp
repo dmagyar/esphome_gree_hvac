@@ -30,7 +30,7 @@ static const uint8_t MAX_VALID_TEMPERATURE = 30;
 static const uint8_t TEMPERATURE_STEP = 1;
 
 // prints user configuration
-void GreeClimate::dump_config() {
+void GreeUARTClimate::dump_config() {
   ESP_LOGCONFIG(TAG, "GreeUART:");
   ESP_LOGCONFIG(TAG, "  Update interval: %u", this->get_update_interval());
   this->dump_traits_(TAG);
