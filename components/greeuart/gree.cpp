@@ -3,9 +3,9 @@
 #include "esphome/core/macros.h"
 
 namespace esphome {
-namespace gree {
+namespace greeuart {
 
-static const char *const TAG = "gree";
+static const char *const TAG = "greeuart";
 
 // block of byte positions in requests/answers
 // GrKoR: I recommend change this approach (byte positions) to structures like gree_raw_packet_t.
@@ -31,18 +31,18 @@ static const uint8_t TEMPERATURE_STEP = 1;
 
 // prints user configuration
 void GreeClimate::dump_config() {
-  ESP_LOGCONFIG(TAG, "Gree:");
+  ESP_LOGCONFIG(TAG, "GreeUART:");
   ESP_LOGCONFIG(TAG, "  Update interval: %u", this->get_update_interval());
   this->dump_traits_(TAG);
   this->check_uart_settings(4800, 1, uart::UART_CONFIG_PARITY_EVEN, 8);
 }
 
-void GreeClimate::loop() {
+void GreeUARTClimate::loop() {
   gree_raw_packet_t *raw_packet = (gree_raw_packet_t *)this->data_read_;
 
   while (!receiving_packet_ && this->available() >= sizeof(gree_header_t)) {
     if (this->peek() != GREE_START_BYTE) {
-      this->read(); // читаем байт "в никуда"
+      this->read(); // read the byte "to nowhere"
       continue;
     }
 
@@ -72,17 +72,17 @@ void GreeClimate::loop() {
 }
 
 /*
-void GreeClimate::setup() {
+void GreeUARTClimate::setup() {
   this->set_update_interval(300);
 }
 */
 
-void GreeClimate::update() {
+void GreeUARTClimate::update() {
   data_write_[CRC_WRITE] = get_checksum_(data_write_, sizeof(data_write_));
   send_data_(data_write_, sizeof(data_write_));
 }
 
-climate::ClimateTraits GreeClimate::traits() {
+climate::ClimateTraits GreeUARTClimate::traits() {
   auto traits = climate::ClimateTraits();
 
   traits.set_visual_min_temperature(MIN_VALID_TEMPERATURE);
@@ -118,7 +118,7 @@ climate::ClimateTraits GreeClimate::traits() {
   return traits;
 }
 
-void GreeClimate::read_state_(const uint8_t *data, uint8_t size) {
+void GreeUARTClimate::read_state_(const uint8_t *data, uint8_t size) {
   // get checksum byte from received data (using the last byte)
   uint8_t data_crc = data[size-1];
   // get checksum byte based on received data (calculating)
@@ -222,7 +222,7 @@ void GreeClimate::read_state_(const uint8_t *data, uint8_t size) {
   this->publish_state();
 }
 
-void GreeClimate::control(const climate::ClimateCall &call) {
+void GreeUARTClimate::control(const climate::ClimateCall &call) {
   data_write_[FORCE_UPDATE] = 175;
   // show current temperature on display every time when sending new command. TEST!
   data_write_[13] = 0x20;
@@ -364,12 +364,12 @@ void GreeClimate::control(const climate::ClimateCall &call) {
   data_write_[FORCE_UPDATE] = 0;
 }
 
-void GreeClimate::send_data_(const uint8_t *message, uint8_t size) {
+void GreeUARTClimate::send_data_(const uint8_t *message, uint8_t size) {
   this->write_array(message, size);
   dump_message_("Sent message", message, size);
 }
 
-void GreeClimate::dump_message_(const char *title, const uint8_t *message, uint8_t size) {
+void GreeUARTClimate::dump_message_(const char *title, const uint8_t *message, uint8_t size) {
   ESP_LOGV(TAG, "%s:", title);
   char str[250] = {0};
   char *pstr = str;
@@ -380,7 +380,7 @@ void GreeClimate::dump_message_(const char *title, const uint8_t *message, uint8
   ESP_LOGV(TAG, "%s", str);
 }
 
-uint8_t GreeClimate::get_checksum_(const uint8_t *message, size_t size) {
+uint8_t GreeUARTClimate::get_checksum_(const uint8_t *message, size_t size) {
   // position of crc in packet
   uint8_t position = size - 1;
   uint8_t sum = 0;
@@ -391,5 +391,5 @@ uint8_t GreeClimate::get_checksum_(const uint8_t *message, size_t size) {
   return crc;
 }
 
-}  // namespace gree
+}  // namespace greeuart
 }  // namespace esphome

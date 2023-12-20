@@ -16,9 +16,9 @@ from esphome.components.climate import (
 CODEOWNERS = ["@bekmansurov"]
 DEPENDENCIES = ["climate", "uart"]
 
-gree_ns = cg.esphome_ns.namespace("gree")
-GreeClimate = gree_ns.class_(
-    "GreeClimate", climate.Climate, cg.PollingComponent, uart.UARTDevice
+gree_ns = cg.esphome_ns.namespace("greeuart")
+GreeUARTClimate = gree_ns.class_(
+    "GreeUARTClimate", climate.Climate, cg.PollingComponent, uart.UARTDevice
 )
 
 # ALLOWED_CLIMATE_SWING_MODES = {
@@ -38,7 +38,7 @@ validate_presets = cv.enum(ALLOWED_CLIMATE_PRESETS, upper=True)
 CONFIG_SCHEMA = cv.All(
     climate.CLIMATE_SCHEMA.extend(
         {
-            cv.GenerateID(): cv.declare_id(GreeClimate),
+            cv.GenerateID(): cv.declare_id(GreeUARTClimate),
             cv.Optional(CONF_SUPPORTED_PRESETS): cv.ensure_list(validate_presets),
             # cv.Optional(CONF_SUPPORTED_SWING_MODES): cv.ensure_list(
                 # validate_swing_modes

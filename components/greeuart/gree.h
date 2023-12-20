@@ -6,7 +6,7 @@
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace gree {
+namespace greeuart {
 
 // enum SwingMode : uint8_t { SWING_OFF = 0, SWING_VERTICAL = 1, SWING_HORIZONTAL = 2, SWING_BOTH = 3 };
 
@@ -83,7 +83,7 @@ class Constants {
 const uint32_t Constants::AC_STATE_REQUEST_INTERVAL = 300;
 */
 
-class GreeClimate : public climate::Climate, public uart::UARTDevice, public PollingComponent {
+class GreeUARTClimate : public climate::Climate, public uart::UARTDevice, public PollingComponent {
  public:
   // void setup() override;
   void loop() override;
@@ -118,5 +118,5 @@ class GreeClimate : public climate::Climate, public uart::UARTDevice, public Pol
   // std::set<climate::ClimateSwingMode> supported_swing_modes_{};
 };
 
-}  // namespace gree
+}  // namespace greeuart
 }  // namespace esphome
