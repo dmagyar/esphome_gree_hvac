@@ -46,6 +46,8 @@ void GreeUARTClimate::loop() {
       continue;
     }
 
+    ESP_LOGW("Received new packet from AC")
+
     this->read_array(this->data_read_, sizeof(gree_start_bytes_t));
     receiving_packet_ = (raw_packet->header.start_bytes.u8x2[1] == GREE_START_BYTE);
     
