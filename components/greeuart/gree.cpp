@@ -39,14 +39,15 @@ void GreeUARTClimate::dump_config() {
 
 void GreeUARTClimate::loop() {
   gree_raw_packet_t *raw_packet = (gree_raw_packet_t *)this->data_read_;
+  ESP_LOGW(TAG, "loop");
 
   while (!receiving_packet_ && this->available() >= sizeof(gree_header_t)) {
+    ESP_LOGW(TAG, "Received new packet from AC");
+
     if (this->peek() != GREE_START_BYTE) {
       this->read(); // read the byte "to nowhere"
       continue;
     }
-
-    ESP_LOGW(TAG, "Received new packet from AC");
 
     this->read_array(this->data_read_, sizeof(gree_start_bytes_t));
     receiving_packet_ = (raw_packet->header.start_bytes.u8x2[1] == GREE_START_BYTE);
