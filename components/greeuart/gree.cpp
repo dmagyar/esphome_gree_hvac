@@ -101,9 +101,7 @@ climate::ClimateTraits GreeUARTClimate::traits() {
   traits.set_supported_fan_modes({
       climate::CLIMATE_FAN_AUTO,
       climate::CLIMATE_FAN_LOW,
-      climate::CLIMATE_FAN_MEDIUM_LOW,
       climate::CLIMATE_FAN_MEDIUM,
-      climate::CLIMATE_FAN_MEDIUM_HIGH,
       climate::CLIMATE_FAN_HIGH
   });
 
@@ -286,9 +284,6 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
       case climate::CLIMATE_FAN_MEDIUM:
         new_fan_speed = AC_FAN_MEDIUM;
         break;
-      case climate::CLIMATE_FAN_HIGH:
-        new_fan_speed = AC_FAN_HIGH;
-        break;
       case climate::CLIMATE_FAN_QUIET:
         new_fan_speed = AC_FAN_QUIET;
         break;
@@ -349,16 +344,16 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
   if (call.get_swing_mode().has_value()) {
     switch (call.get_swing_mode().value()) {
       case climate::CLIMATE_SWING_OFF:
-           data_[SWING] = SWING_OFF;
+           data_[SWING] = AC_SWING_OFF;
         break;
       case climate::CLIMATE_SWING_VERTICAL:
-           data_[SWING] = SWING_VERTICAL;
+           data_[SWING] = AC_SWING_VERTICAL;
         break;
       case climate::CLIMATE_SWING_HORIZONTAL:
-           data_[SWING] = SWING_HORIZONTAL;
+           data_[SWING] = AC_SWING_HORIZONTAL;
         break;
       case climate::CLIMATE_SWING_BOTH:
-           data_[SWING] = SWING_BOTH;
+           data_[SWING] = AC_SWING_BOTH;
         break;
     }
   }
