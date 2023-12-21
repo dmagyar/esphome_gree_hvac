@@ -28,7 +28,8 @@ enum ac_fan: uint8_t {
   AC_FAN_AUTO = 0x00,
   AC_FAN_LOW = 0x01,
   AC_FAN_MEDIUM = 0x02,
-  AC_FAN_HIGH = 0x03
+  AC_FAN_HIGH = 0x03,
+  AC_FAN_QUIET = 0x04
 };
 
 // not implemented yet

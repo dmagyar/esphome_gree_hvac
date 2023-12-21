@@ -101,7 +101,9 @@ climate::ClimateTraits GreeUARTClimate::traits() {
   traits.set_supported_fan_modes({
       climate::CLIMATE_FAN_AUTO,
       climate::CLIMATE_FAN_LOW,
+      climate::CLIMATE_FAN_MEDIUM_LOW,
       climate::CLIMATE_FAN_MEDIUM,
+      climate::CLIMATE_FAN_MEDIUM_HIGH,
       climate::CLIMATE_FAN_HIGH
   });
 
@@ -113,7 +115,8 @@ climate::ClimateTraits GreeUARTClimate::traits() {
 
   traits.add_supported_preset(climate::CLIMATE_PRESET_NONE);
   traits.add_supported_preset(climate::CLIMATE_PRESET_BOOST);
-  // traits.add_supported_preset(climate::CLIMATE_PRESET_SLEEP);
+  traits.add_supported_preset(climate::CLIMATE_PRESET_SLEEP);
+  traits.add_supported_preset(climate::CLIMATE_PRESET_AWAY);
 
   return traits;
 }
@@ -181,11 +184,14 @@ void GreeUARTClimate::read_state_(const uint8_t *data, uint8_t size) {
     case AC_FAN_HIGH:
       this->fan_mode = climate::CLIMATE_FAN_HIGH;
       break;
+    case AC_FAN_QUIET:
+      this->fan_mode = climate::CLIMATE_FAN_QUIET;
+      break;
     default:
       ESP_LOGW(TAG, "Unknown AC mode&FAN: %s", data[MODE]);
   }
 
-  /*
+  
   switch (data[SWING]) {
     case AC_SWING_OFF:
       this->swing_mode = climate::CLIMATE_SWING_OFF;
@@ -203,7 +209,7 @@ void GreeUARTClimate::read_state_(const uint8_t *data, uint8_t size) {
       this->swing_mode = climate::CLIMATE_SWING_BOTH;
       break;
   }
-  */
+  
 
   switch (data[10]) {
     case 7:
@@ -227,7 +233,7 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
   // show current temperature on display every time when sending new command. TEST!
   data_write_[13] = 0x20;
   
-/*
+
   // logging of saved mode&fan vars
   char str[250] = {0};
   char *pstr = str;
@@ -235,7 +241,7 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
     pstr += sprintf(pstr, "%02X ", data_save_[i]);
   }
   ESP_LOGV(TAG, "SAVED: %s", str);
-*/
+
 
   // saving mode&fan values from previous 
   uint8_t new_mode = data_write_[MODE] & MODE_MASK;
@@ -282,6 +288,9 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
         break;
       case climate::CLIMATE_FAN_HIGH:
         new_fan_speed = AC_FAN_HIGH;
+        break;
+      case climate::CLIMATE_FAN_QUIET:
+        new_fan_speed = AC_FAN_QUIET;
         break;
       default:
         ESP_LOGW(TAG, "Setting of unsupported FANSPEED: %s", call.get_fan_mode().value());
@@ -340,16 +349,16 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
   if (call.get_swing_mode().has_value()) {
     switch (call.get_swing_mode().value()) {
       case climate::CLIMATE_SWING_OFF:
-        // data_[SWING] = SWING_OFF;
+           data_[SWING] = SWING_OFF;
         break;
       case climate::CLIMATE_SWING_VERTICAL:
-        // data_[SWING] = SWING_VERTICAL;
+           data_[SWING] = SWING_VERTICAL;
         break;
       case climate::CLIMATE_SWING_HORIZONTAL:
-        // data_[SWING] = SWING_HORIZONTAL;
+           data_[SWING] = SWING_HORIZONTAL;
         break;
       case climate::CLIMATE_SWING_BOTH:
-        // data_[SWING] = SWING_BOTH;
+           data_[SWING] = SWING_BOTH;
         break;
     }
   }
