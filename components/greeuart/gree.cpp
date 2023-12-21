@@ -233,13 +233,14 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
   
 
   // logging of saved mode&fan vars
+/*
   char str[250] = {0};
   char *pstr = str;
   for (int i = 0; i < sizeof(data_save_); i++) {
     pstr += sprintf(pstr, "%02X ", data_save_[i]);
   }
   ESP_LOGV(TAG, "SAVED: %s", str);
-
+*/
 
   // saving mode&fan values from previous 
   uint8_t new_mode = data_write_[MODE] & MODE_MASK;
@@ -344,16 +345,16 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
   if (call.get_swing_mode().has_value()) {
     switch (call.get_swing_mode().value()) {
       case climate::CLIMATE_SWING_OFF:
-           data_[SWING] = AC_SWING_OFF;
+           data_write_[SWING] = AC_SWING_OFF;
         break;
       case climate::CLIMATE_SWING_VERTICAL:
-           data_[SWING] = AC_SWING_VERTICAL;
+           data_write_[SWING] = AC_SWING_VERTICAL;
         break;
       case climate::CLIMATE_SWING_HORIZONTAL:
-           data_[SWING] = AC_SWING_HORIZONTAL;
+           data_write_[SWING] = AC_SWING_HORIZONTAL;
         break;
       case climate::CLIMATE_SWING_BOTH:
-           data_[SWING] = AC_SWING_BOTH;
+           data_write_[SWING] = AC_SWING_BOTH;
         break;
     }
   }
