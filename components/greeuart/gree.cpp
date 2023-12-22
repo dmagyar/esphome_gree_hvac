@@ -184,7 +184,7 @@ void GreeUARTClimate::read_state_(const uint8_t *data, uint8_t size) {
 
   if ((data[MODE] & FAN_MASK) > 7) {
     // SLEEP + fanmode, need to deduct 8
-    data[MODE] -= 8;
+    data[MODE] = (uint8_t)data[MODE] - 8;
   }
 
   // get current AC FAN SPEED from its response
