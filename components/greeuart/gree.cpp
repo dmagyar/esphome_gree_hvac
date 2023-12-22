@@ -193,8 +193,12 @@ void GreeUARTClimate::read_state_(uint8_t *data, uint8_t size) {
       this->fan_mode = climate::CLIMATE_FAN_AUTO;
       break;
     case AC_FAN_LOW:
-      this->fan_mode = climate::CLIMATE_FAN_LOW;
-      break;
+      if (data[QUIET] == 8) {
+          this->fan_mode = climate::CLIMATE_FAN_QUIET;
+          break;
+      }
+        this->fan_mode = climate::CLIMATE_FAN_LOW;
+        break;
     case AC_FAN_MEDIUM:
       if (data[EXTRAFAN] == AC_EXTRAFAN_MEDIUM_LOW) {
         this->fan_mode = climate::CLIMATE_FAN_MEDIUM;
@@ -225,7 +229,7 @@ void GreeUARTClimate::read_state_(uint8_t *data, uint8_t size) {
   }
 
   
-  switch (data[SWING] & SWING_UPDOWN_MASK) {
+  switch (data[SWING]) {
     case AC_SWING_OFF:
       this->swing_mode = climate::CLIMATE_SWING_OFF;
       break;
