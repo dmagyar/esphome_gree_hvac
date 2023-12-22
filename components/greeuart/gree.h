@@ -121,7 +121,7 @@ class GreeUARTClimate : public climate::Climate, public uart::UARTDevice, public
 
  protected:
   climate::ClimateTraits traits() override;
-  void read_state_(const uint8_t *data, uint8_t size);
+  void read_state_(uint8_t *data, uint8_t size);
   void send_data_(const uint8_t *message, uint8_t size);
   void dump_message_(const char *title, const uint8_t *message, uint8_t size);
   uint8_t get_checksum_(const uint8_t *message, size_t size);
