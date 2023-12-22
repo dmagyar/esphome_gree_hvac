@@ -182,6 +182,9 @@ void GreeUARTClimate::read_state_(uint8_t *data, uint8_t size) {
       ESP_LOGW(TAG, "Unknown AC MODE&fan: %s", data[MODE]);
   }
 
+  // by default, no preset
+  this->preset = climate::CLIMATE_PRESET_NONE;
+
   if ((data[MODE] & FAN_MASK) > 7) {
     // SLEEP + fanmode, need to deduct 8
     data[MODE] = (uint8_t)data[MODE] - 8;
@@ -259,8 +262,11 @@ void GreeUARTClimate::read_state_(uint8_t *data, uint8_t size) {
       this->preset = climate::CLIMATE_PRESET_BOOST;
       break;
     default:
-      this->preset = climate::CLIMATE_PRESET_NONE;
       break;
+  }
+
+  if ((data[SWING] = 0x50) && (data[QUIET] == 0X08)) {
+      this->preset = climate::CLIMATE_PRESET_COMFORT;
   }
 
   this->publish_state();
