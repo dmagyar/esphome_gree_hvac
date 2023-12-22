@@ -374,6 +374,10 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
         } else if (new_mode == AC_MODE_HEAT) {
           data_write_[10] = 8;
         }
+        data_write_[SWING] = 0x50;
+        if (new_fan_speed > 7) {
+            new_fan_speed = new_fan_speed - 8;
+        }
         break;
       case climate::CLIMATE_PRESET_BOOST:
         if (new_mode == AC_MODE_COOL) {
@@ -384,7 +388,13 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
         // skip preset when not COOL or HEAT mode
         break;
       case climate::CLIMATE_PRESET_SLEEP:
+          if (new_mode == AC_MODE_COOL) {
+            data_write_[10] = 0;
+          } else if (new_mode == AC_MODE_HEAT) {
+            data_write_[10] = 8;
+          }
           new_fan_speed = new_fan_speed + 8;
+          data_write_[QUIET] = 0x00;
         // something
         break;
       case climate::CLIMATE_PRESET_COMFORT:
