@@ -107,8 +107,8 @@ climate::ClimateTraits GreeUARTClimate::traits() {
       climate::CLIMATE_FAN_AUTO,
       climate::CLIMATE_FAN_LOW,
       climate::CLIMATE_FAN_MEDIUM,
-      climate::CLIMATE_FAN_MIDDLE,
-      climate::CLIMATE_FAN_FOCUS,
+//     climate::CLIMATE_FAN_MIDDLE,
+//      climate::CLIMATE_FAN_FOCUS,
       climate::CLIMATE_FAN_HIGH,
       climate::CLIMATE_FAN_QUIET
   });
@@ -185,6 +185,7 @@ void GreeUARTClimate::read_state_(uint8_t *data, uint8_t size) {
   if ((data[MODE] & FAN_MASK) > 7) {
     // SLEEP + fanmode, need to deduct 8
     data[MODE] = (uint8_t)data[MODE] - 8;
+    this->preset = climate::CLIMATE_PRESET_SLEEP;
   }
 
   // get current AC FAN SPEED from its response
@@ -249,11 +250,11 @@ void GreeUARTClimate::read_state_(uint8_t *data, uint8_t size) {
   
 
   switch (data[10]) {
-    case 7:
+    case 1:
       // when COOL TURBO
       this->preset = climate::CLIMATE_PRESET_BOOST;
       break;
-    case 15:
+    case 9:
       // when HEAT TURBO
       this->preset = climate::CLIMATE_PRESET_BOOST;
       break;
