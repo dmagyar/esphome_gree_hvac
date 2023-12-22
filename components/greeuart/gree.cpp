@@ -15,7 +15,12 @@ static const uint8_t FORCE_UPDATE = 7;
 static const uint8_t MODE = 8;
 static const uint8_t MODE_MASK = 0b11110000;
 static const uint8_t FAN_MASK = 0b00001111;
+static const uint8_t SWING_UPDOWN_MASK = 0b11110000;
+static const uint8_t SWING_LEFTRIGHT_MASK = 0b00001111;
+
 static const uint8_t SWING = 12;
+static const uint8_t QUIET = 20;
+static const uint8_t EXTRAFAN = 20;
 
 static const uint8_t CRC_WRITE = 46;
 //CRC_READ moved to read_state_ with last bytes because of different length of incoming packets
@@ -102,18 +107,27 @@ climate::ClimateTraits GreeUARTClimate::traits() {
       climate::CLIMATE_FAN_AUTO,
       climate::CLIMATE_FAN_LOW,
       climate::CLIMATE_FAN_MEDIUM,
-      climate::CLIMATE_FAN_HIGH
+      climate::CLIMATE_FAN_MIDDLE,
+      climate::CLIMATE_FAN_FOCUS,
+      climate::CLIMATE_FAN_HIGH,
+      climate::CLIMATE_FAN_QUIET
   });
 
-  // traits.set_supported_swing_modes(this->supported_swing_modes_);
+  traits.set_supported_swing_modes({
+      climate::CLIMATE_SWING_OFF,
+      climate::CLIMATE_SWING_BOTH,
+      climate::CLIMATE_SWING_VERTICAL,
+      climate::CLIMATE_SWING_HORIZONTAL
+  });
+
   traits.set_supports_current_temperature(true);
   traits.set_supports_two_point_target_temperature(false);
 
   traits.set_supported_presets(this->supported_presets_);
-
   traits.add_supported_preset(climate::CLIMATE_PRESET_NONE);
   traits.add_supported_preset(climate::CLIMATE_PRESET_BOOST);
   traits.add_supported_preset(climate::CLIMATE_PRESET_SLEEP);
+  traits.add_supported_preset(climate::CLIMATE_PRESET_COMFORT);
   traits.add_supported_preset(climate::CLIMATE_PRESET_AWAY);
 
   return traits;
@@ -168,6 +182,11 @@ void GreeUARTClimate::read_state_(const uint8_t *data, uint8_t size) {
       ESP_LOGW(TAG, "Unknown AC MODE&fan: %s", data[MODE]);
   }
 
+  if ((data[MODE] & FAN_MASK) > 7) {
+    // SLEEP + fanmode, need to deduct 8
+    data[MODE] -= 8;
+  }
+
   // get current AC FAN SPEED from its response
   switch (data[MODE] & FAN_MASK) {
     case AC_FAN_AUTO:
@@ -177,20 +196,36 @@ void GreeUARTClimate::read_state_(const uint8_t *data, uint8_t size) {
       this->fan_mode = climate::CLIMATE_FAN_LOW;
       break;
     case AC_FAN_MEDIUM:
+      if (data[EXTRAFAN] == AC_EXTRAFAN_MEDIUM_LOW) {
+        this->fan_mode = climate::CLIMATE_FAN_MEDIUM;
+        break;
+      }
+      if (data[EXTRAFAN] == AC_EXTRAFAN_MEDIUM) {
+        this->fan_mode = climate::CLIMATE_FAN_MIDDLE;
+        break;
+      }
+      // todo: more extrafan values? let's report MEDIUM
       this->fan_mode = climate::CLIMATE_FAN_MEDIUM;
       break;
     case AC_FAN_HIGH:
+      if (data[EXTRAFAN] == AC_EXTRAFAN_MEDIUM_HIGH) {
+        this->fan_mode = climate::CLIMATE_FAN_FOCUS;
+        break;
+      }
+      if (data[EXTRAFAN] == AC_EXTRAFAN_HIGH) {
+        this->fan_mode = climate::CLIMATE_FAN_HIGH;
+        break;
+      }
+      // todo: more extrafan values? let's report HIGH
       this->fan_mode = climate::CLIMATE_FAN_HIGH;
       break;
-    case AC_FAN_QUIET:
-      this->fan_mode = climate::CLIMATE_FAN_QUIET;
-      break;
+    
     default:
       ESP_LOGW(TAG, "Unknown AC mode&FAN: %s", data[MODE]);
   }
 
   
-  switch (data[SWING]) {
+  switch (data[SWING] & SWING_UPDOWN_MASK) {
     case AC_SWING_OFF:
       this->swing_mode = climate::CLIMATE_SWING_OFF;
       break;
@@ -278,15 +313,35 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
     switch (call.get_fan_mode().value()) {
       case climate::CLIMATE_FAN_AUTO:
         new_fan_speed = AC_FAN_AUTO;
+        data_write_[QUIET] = 0x00;
         break;
       case climate::CLIMATE_FAN_LOW:
         new_fan_speed = AC_FAN_LOW;
+        data_write_[QUIET] = 0x00;
         break;
       case climate::CLIMATE_FAN_MEDIUM:
         new_fan_speed = AC_FAN_MEDIUM;
+        data_write_[EXTRAFAN] = AC_EXTRAFAN_MEDIUM_LOW;
+        data_write_[QUIET] = 0x00;
+        break;
+      case climate::CLIMATE_FAN_MIDDLE:
+        new_fan_speed = AC_FAN_MEDIUM;
+        data_write_[EXTRAFAN] = AC_EXTRAFAN_MEDIUM;
+        data_write_[QUIET] = 0x00;
+        break;
+      case climate::CLIMATE_FAN_FOCUS:
+        new_fan_speed = AC_FAN_HIGH;
+        data_write_[EXTRAFAN] = AC_EXTRAFAN_MEDIUM_HIGH;
+        data_write_[QUIET] = 0x00;
+        break;
+      case climate::CLIMATE_FAN_HIGH:
+        new_fan_speed = AC_FAN_HIGH;
+        data_write_[EXTRAFAN] = AC_EXTRAFAN_HIGH;
+        data_write_[QUIET] = 0x00;
         break;
       case climate::CLIMATE_FAN_QUIET:
-        new_fan_speed = AC_FAN_QUIET;
+        new_fan_speed = AC_FAN_LOW;
+        data_write_[QUIET] = 0x08;
         break;
       default:
         ESP_LOGW(TAG, "Setting of unsupported FANSPEED: %s", call.get_fan_mode().value());
@@ -304,21 +359,35 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
     switch (call.get_preset().value()) {
       case climate::CLIMATE_PRESET_NONE:
         if (new_mode == AC_MODE_COOL) {
-          data_write_[10] = 6;
+          data_write_[10] = 0;
         } else if (new_mode == AC_MODE_HEAT) {
-          data_write_[10] = 14;
+          data_write_[10] = 8;
         }
         break;
       case climate::CLIMATE_PRESET_BOOST:
         if (new_mode == AC_MODE_COOL) {
-          data_write_[10] = 7;
+          data_write_[10] = 1;
         } else if (new_mode == AC_MODE_HEAT) {
-          data_write_[10] = 15;
+          data_write_[10] = 9;
         }
         // skip preset when not COOL or HEAT mode
         break;
       case climate::CLIMATE_PRESET_SLEEP:
+          new_fan_speed = new_fan_speed + 8;
         // something
+        break;
+      case climate::CLIMATE_PRESET_COMFORT:
+        // abusing this to get a fixed middle-low setting to heat the bed. Too bad esphome does not support more swing modes
+          // turn off all presets (since this is not really a preset)
+          if (new_mode == AC_MODE_COOL) {
+            data_write_[10] = 0;
+          } else if (new_mode == AC_MODE_HEAT) {
+            data_write_[10] = 8;
+          }
+          data_write_[SWING] = 0x50;
+          new_fan_speed = AC_FAN_LOW;
+          // enables quiet mode
+          data_write_[QUIET] = 0x08;
         break;
       default:
         // something?
@@ -341,7 +410,6 @@ void GreeUARTClimate::control(const climate::ClimateCall &call) {
       data_write_[TEMPERATURE] = (call.get_target_temperature().value() - MIN_VALID_TEMPERATURE) * 16;
   }
 
-  // temporary disabled
   if (call.get_swing_mode().has_value()) {
     switch (call.get_swing_mode().value()) {
       case climate::CLIMATE_SWING_OFF:

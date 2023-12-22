@@ -24,35 +24,58 @@ enum ac_mode: uint8_t {
   AC_MODE_HEAT = 0xC0
 };
 
-enum ac_fan: uint8_t {
+enum ac_basic_fan: uint8_t {
   AC_FAN_AUTO = 0x00,
   AC_FAN_LOW = 0x01,
   AC_FAN_MEDIUM = 0x02,
   AC_FAN_HIGH = 0x03,
-  AC_FAN_QUIET = 0x04
+  AC_FAN_SLEEP = 0x0b
+}
+
+enum ac_extra_fan: uint8_t {
+  AC_EXTRAFAN_AUTO = 0x00,
+  AC_EXTRAFAN_LOW = 0x01,
+  AC_EXTRAFAN_MEDIUM_LOW = 0x02,
+  AC_EXTRAFAN_MEDIUM = 0x03,
+  AC_EXTRAFAN_MEDIUM_HIGH = 0x04,
+  AC_EXTRAFAN_HIGH = 0x05
 };
 
-// not implemented yet
+// ESPHOME only understands full swings :(
 enum ac_swing: uint8_t {
-  AC_SWING_OFF = 0x44,
-  AC_SWING_VERTICAL = 0x14,
-  AC_SWING_HORIZONTAL = 0x41,
+  AC_SWING_OFF = 0x00,
+  AC_SWING_VERTICAL = 0x10,
+  AC_SWING_HORIZONTAL = 0x01,
   AC_SWING_BOTH = 0x11
 };
 
-// not implemented yet
-enum ac_louver_H: uint8_t {
-  AC_LOUVERH_OFF = 0x00,
-  AC_LOUVERH_SWING_FULL = 0x10,
-  AC_LOUVERH_SWING_TOP = 0x20,
-  AC_LOUVERH_SWING_ABOVEMIDDLE = 0x30,
-  AC_LOUVERH_SWING_MIDDLE = 0x40,
-  AC_LOUVERH_SWING_BELOWMIDDLE = 0x50,
-  AC_LOUVERH_SWING_BOTTOM = 0x60,
-  AC_LOUVERH_SWING_MIDDLE_TO_BOTTOM = 0x70,
-  AC_LOUVERH_SWING_ABOVEMIDDLE_TO_BELOWMIDDLE = 0x90,
-  AC_LOUVERH_SWING_MIDDLE_TO_TOP = 0xB0
+// not implemented yet missing ESPHOME API
+enum ac_updown_swing_H: uint8_t {
+  AC_UPDOWN_SWING_OFF = 0x00,
+  AC_UPDOWN_SWING_FULL = 0x10,
+  AC_UPDOWN_FIXED_UPMOST = 0x20,
+  AC_UPDOWN_FIXED_MIDDLE_UP = 0x30,
+  AC_UPDOWN_FIXED_MIDDLE = 0x40,
+  AC_UPDOWN_FIXED_MIDDLE_LOW = 0x50,
+  AC_UPDOWN_FIXED_DOWNMOST = 0x60,
+  AC_UPDOWN_SWING_DOWNMOST = 0x70,
+  AC_UPDOWN_SWING_MIDDLE_LOW = 0x80,
+  AC_UPDOWN_SWING_MIDDLE = 0x90,
+  AC_UPDOWN_SWING_MIDDLE_UP = 0xA0,
+  AC_UPDOWN_SWING_UPMOST = 0xB0
 };
+
+// not implemented yet
+enum ac_leftright_swing_H: uint8_t {
+  AC_LEFTRIGHT_SWING_OFF = 0x00,
+  AC_LEFTRIGHT_SWING_FULL = 0x01,
+  AC_LEFTRIGHT_FIXED_LEFTMOST = 0x02,
+  AC_LEFTRIGHT_FIXED_LEFTMIDDLE = 0x03,
+  AC_LEFTRIGHT_FIXED_MIDDLE = 0x04,
+  AC_LEFTRIGHT_FIXED_RIGHTMIDDLE = 0x05,
+  AC_LEFTRIGHT_FIXED_RIGHT = 0x06
+};
+
 
 #define GREE_START_BYTE 0x7E
 #define GREE_RX_BUFFER_SIZE 52
@@ -92,9 +115,9 @@ class GreeUARTClimate : public climate::Climate, public uart::UARTDevice, public
   void dump_config() override;
   void control(const climate::ClimateCall &call) override;
   void set_supported_presets(const std::set<climate::ClimatePreset> &presets) { this->supported_presets_ = presets; }
-  // void set_supported_swing_modes(const std::set<climate::ClimateSwingMode> &modes) {
-  //   this->supported_swing_modes_ = modes;
-  // }
+  void set_supported_swing_modes(const std::set<climate::ClimateSwingMode> &modes) {
+     this->supported_swing_modes_ = modes;
+  }
 
  protected:
   climate::ClimateTraits traits() override;
@@ -116,7 +139,7 @@ class GreeUARTClimate : public climate::Climate, public uart::UARTDevice, public
   bool receiving_packet_ = false;
 
   std::set<climate::ClimatePreset> supported_presets_{};
-  // std::set<climate::ClimateSwingMode> supported_swing_modes_{};
+  std::set<climate::ClimateSwingMode> supported_swing_modes_{};
 };
 
 }  // namespace greeuart
