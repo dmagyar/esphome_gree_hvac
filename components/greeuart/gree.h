@@ -30,7 +30,7 @@ enum ac_basic_fan: uint8_t {
   AC_FAN_MEDIUM = 0x02,
   AC_FAN_HIGH = 0x03,
   AC_FAN_SLEEP = 0x0b
-}
+};
 
 enum ac_extra_fan: uint8_t {
   AC_EXTRAFAN_AUTO = 0x00,
