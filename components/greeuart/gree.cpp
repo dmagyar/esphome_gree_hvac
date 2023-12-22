@@ -133,7 +133,7 @@ climate::ClimateTraits GreeUARTClimate::traits() {
   return traits;
 }
 
-void GreeUARTClimate::read_state_(const uint8_t *data, uint8_t size) {
+void GreeUARTClimate::read_state_(uint8_t *data, uint8_t size) {
   // get checksum byte from received data (using the last byte)
   uint8_t data_crc = data[size-1];
   // get checksum byte based on received data (calculating)
